@@ -1,165 +1,165 @@
-# Arklet-Frick: A basic ARK resolver
+# Arklet-Frick: a basic ARK resolver
 
-Arklet-Frick is a fork of the [Internet Archive Arklet](https://github.com/internetarchive/arklet/) project
-with additional features, improved security and bugfixes.
+Arklet-Frick is a fork of the Internet Archive Arklet (https://github.com/internetarchive/arklet/) project with additional features, improved security, and bugfixes. 
 
-Arklet-Frick is a Python Django application for minting, binding, and resolving ARKs.
+Arklet-Frick is a Python Django application for minting, binding, and resolving ARKS.
 
-It is intended to follow best practices set out by https://arks.org/.
-| |Arklet-Frick | Arklet |
-|-|------------- | ------------- |
-|ARK resolution|x|x|
-|ARK minting and editing|x|x|
-|Bulk minting and editing|x||
-|Suffix passthrough|x||
-|Separate minter and resolver|x||
-|API access key hashing|x||
-|Shoulder rules|x||
-|Extensive metadata|x||
-|?info and ?json endpoints|x||
+It is intended to follow best practices set out by https://arks.org/ (https://arks.org/).
 
-This code is licensed with the MIT open source license.
+## Feature Comparison
 
-# Overview
+|                              |              |        |
+| :--------------------------- | :----------- | :----- |
+|                              | Arklet-Frick | Arklet |
+| ARK Resolution               | ✓            | ✓      |
+| ARK minting and editing      | ✓            | ✓      |
+| Bulk minting and editing     | ✓            |        |
+| Suffix passthrough           | ✓            |        |
+| Separate minter and resolver | ✓            |        |
+| API access key hashing       | ✓            |        |
+| Shoulder rules               | ✓            |        |
+| Extensive metadata           | ✓            |        |
+| ?info and ?json endpoints    | ✓            |        |
 
-The Arklet service consists of four major components.
+## Overview
 
-1. SQL Database which stores ARK identifiers and related metadata
-2. Python Django web application (resolver) which allows users to input URLs containing ARK identifiers and be automatically redirected to the associated resource URL (or alternatively, to receive information about the resource using the `?info` or `?json` suffixes)
-3. Python Django web application (minter) which allows administrators to manage the ARK system through both a web API (to mint and edit ARKs) and a graphical web user interface (to manage access tokens and shoulders). The minter can also function as a resolver.
-4. Python command line tool (ui/api.py) which allows users to mint and edit ARKs using a command line interface.
+The Arklet-Frick service consists of four major components:
 
-The repository comes pre-configured with Docker development and production settings to manage all three components. See the Setup section for more details.
+- A SQL database that stores ARK identifiers and their metadata.
+- A “resolver”: A Python Django web application that allows users to input URLS containing ARK identifiers and be redirected to the associated URL.
+- A “minter”: a Python Django web application that allows approved users to mint and edit ARKs through a web API and administrators to manage access tokens and shoulders through a web interface.
+- A Python command line tool that allows approved users to manipulate ARKs using a command line interface.
 
-# Usage
+The repository comes pre-configured with Docker development and production settings to manage the application. 
 
-## ARK resolution API (resolver and minter)
+## Usage
 
-`GET /ark://1234/a0test` redirects to the URL associated with the given ARK ID, a 404 if the given ARK is in the system but no URL is associated with it, and forwards the request to n2t.net if no ARK record matching the given ID is found at all.
+### ARK Resolution
 
-`GET /ark://1234/a0test?info` returns a human readable HTML response with all extra metadata stored in the database and 404 if no matching record is found.
+A resolver running at https://resolver.org/ (https://resolver.org/) will resolve ARKs that follow the format laid out in the ARK Alliance specification.
 
-`GET /ark://1234/a0test?json` returns a pure JSON response of all extra metadata stored in the database and 404 if no matching record is found.
+The ARK must consist of four parts: the “ark” header, a namespace, a shoulder, and an identifier.
 
-`GET /ark://1234/a0test/<suffix>` and `GET /ark://1234/a0test?<suffix>` redirect to the URL associated with the given ARK ID and 'pass through' the suffix to the final destination URL.
+A standard ARK might look like this: ark:/12345/ab1fgh234mn
 
-## ARK management API (minter only)
+GET https://resolver.org/ark:/12345/ab1fgh234mn (https://resolver.org/ark:/12345/ab1fgh234mn) redirects to the value stored in the URL field of the ARK metadata. If the ARK exists but the URL field is empty, a 404 code is returned. If no matching ARK is found, Arklet-Frick will forward the request to https://n2t.net/ (https://n2t.net/).
 
-ARK management endpoints additionally require an `Authorization` header with a valid API key. API keys can be provisioned by the administrator in the arklet admin user interface and are tied to NAANs.
+GET https://resolver.org/ark:/12345/ab1fgh234mn?info (https://resolver.org/ark:/12345/ab1fgh234mn?info) and GET https://resolver.org/ark:/12345/ab1fgh234mn?ijson (https://resolver.org/ark:/12345/ab1fgh234mn?ijson) return the ARK metadata. The ?info extension returns a human-readable HTML representation, while the ?json extension returns pure JSON. If the ARK is not found in the database, a 404 error is returned. 
 
-`POST /mint` mints an ARK described by JSON in the request body. Request parameters:
+GET https://resolver.org/ark:/12345/ab1fgh234mn/any_suffix (https://resolver.org/ark:/12345/ab1fgh234mn/any_suffix) or GET https://resolver.org/ark:/12345/ab1fgh234mn?any_suffix (https://resolver.org/ark:/12345/ab1fgh234mn?any_suffix) will redirect to the value of the URL and “pass-through” the value of the suffix to the destination URL. For instance, if ark:/12345/ab1fgh234mn redirects to English Wikipedia, https://resolver.org/ark:/12345/ab1fgh234mn/Henry_Clay_Frick (https://resolver.org/ark:/12345/ab1fgh234mn/Henry_Clay_Frick) will redirect to  https://en.wikipedia.org/wiki/Henry_Clay_Frick (https://en.wikipedia.org/wiki/Henry_Clay_Frick).
 
-```
-naan
-shoulder
-url (optional)
-metadata (optional)
-title (optional)
-type (optional)
-commitment (optional)
-identifier (optional)
-format (optional)
-relation (optional)
-source (optional)
-```
+### ARK minting and editing
 
-Returns a JSON response with the minted ark identifier (string). ARKs cannot be minted if the provided shoulder does not exist. The administrator must manage shoulders using the arklet admin user interface.
+ARK endpoints require an Authorization header with a valid API key. API keys can be provisioned by the administrator, using the administrator’s interface. API keys are tied to specific NAANs. The minter supports two endpoints and can function as a resolver for GET commands. The minter also supports bulk versions of all three functions.
 
-`PUT /update` updates an ARK described by JSON in the request body. Request parameters:
+POST /mint mints the ARK described by the JSON input. Request parameters:
 
-```
-ark
-url (optional)
-metadata (optional)
-title (optional)
-type (optional)
-commitment (optional)
-identifier (optional)
-format (optional)
-relation (optional)
-source (optional)
-```
+- Naan
+- Shoulder
+- URL (optional)
+- Title (optional)
+- Type (optional)
+- Commitment (optional)
+- Identifier (optional)
+- Format (optional)
+- Relation (optional)
+- Source (optional)
 
-Returns an empty 200 response if update is successful.
+The /mint endpoint returns a JSON response with the minted ARK identifier. 
 
-`POST /bulk_update` update several ARK at once described by JSON in the request body. The request body should be a JSON object with one key (`data`) whose value is an array of objects containing the fields to be updated:
+Both the NAAN and shoulder supplied to the /mint command must already exist when the command is called. Minting requests with an invalid NAAN or shoulder will raise an error.
 
-```
-ark
-url (optional)
-metadata (optional)
-title (optional)
-type (optional)
-commitment (optional)
-identifier (optional)
-format (optional)
-relation (optional)
-source (optional)
-```
+PUT /update updates an ARK with the metadata supplied in the JSON input. Request parameters:
 
-The maximum number of records that can be updated at once is 100.
+- Ark
+- URL (optional)
+- Title (optional)
+- Type (optional)
+- Commitment (optional)
+- Identifier (optional)
+- Format (optional)
+- Relation (optional)
+- Source (optional)
 
-`POST /bulk_mint` mints several ARK at once described by JSON in the request body. The request body should be a JSON object with one key (`naan`) which is the NAAN under which the ARKs should be created, and one key (`data`) whose value is an array of objects containing the fields to be updated:
+The /update endpoint returns a 200 response if the update is successful.
 
-```
-shoulder (required)
-url (optional)
-metadata (optional)
-title (optional)
-type (optional)
-commitment (optional)
-identifier (optional)
-format (optional)
-relation (optional)
-source (optional)
-```
+The three bulk endpoints are /bulk_mint, /bulk_update, and /bulk_query. A maximum of 100 records can be manipulated at once.
 
-The maximum number of records that can be minted at once is 100.
+POST /bulk_mint mints up to 100 records at once. The JSON input must consist of a “naan” key, where the value is a valid NAAN that all the minted ARKs will be assigned to, and a “data” key, where the value is an array of objects containing ARK metadata. Each object must include a valid shoulder. The other valid fields are the standard ARK metadata fields and they are all optional. 
 
-`POST /bulk_query` queries several ARK at once described by JSON in the request body. The request body should be a JSON object with one key (`data`) which is an array of objects each with one key (`ark`).
+POST /bulk_mint updates up to 100 records at once. The JSON input should consist of a “data” key, where the value is an array of objects containing ARK metadata. Each object must include a valid ARK that already exists. The other valid fields are the standard ARK metadata fields and they are all optional. 
 
-The maximum number of records that can be queried at once is 100.
+POST /bulk_query returns the metadata for up to 100 queried ARKs at once.  The JSON input should consist of a “data” key, where the value is an array of objects with one “ark” key. 
 
-Python command line tools are available in the `/ui` subdirectory for interacting with the API.
+### Command-line Tool
 
-## Admin User Interface
+The /ui subdirectory contains a command-line tool for interacting with the API. Valid commands are query, mint, update, query_csv, mint_csv, and update_csv. The single-use endpoints require either a valid ARK or a valid NAAN/shoulder combination, followed by optional arguments for each valid metadata field: url, title, type, commitment, identifier, format, relation, source.
 
-Administrators can access the `/admin` user interface of the minter to manage API access keys, shoulders, NAANs, and other administrators. Administrator access is protected using standard username and password authentication. The first administrator account must be set up when initially deploying the application.
+python arklet_api.py query --ark ark:/13960/t5n960f7n
 
-# Setup
+python arklet_api.py mint --naan 13960 --shoulder /a0 --url https://wikipedia.org/
 
-## Local
+python arklet_api.py update --ark ark:/13960/t5n960f7n --title new_title
 
-Use `docker-compose up` to automatically launch the `postgres` database, the `arklet-minter` component, and the `arklet-resolver` component. By default, the minter runs on 127.0.0.1:8001 and the resolver runs on 127.0.0.1:8000.
+The bulk endpoints are manipulated via CSV when using the command line tool. Each bulk command is limited to 100 values.
 
-Configuration for the local environment can be found in the `docker/env.local` envfile. Note that if you wish to change the ports you also need to update the port forwarding configuration in `docker-compose.yml`.
+python arklet_api.py query_csv --csv /path/to/arks.csv
+
+This command queries a batch of ARKs described in a CSV document. The given CSV document must contain a column of ARK identifiers named “ark.” This command returns a JSON array describing metadata for each ARK record.
+
+python arklet_api.py update_csv --csv /path/to/arks.csv
+
+This command updates a batch of ARKs described in a CSV document. The given CSV document must contain a column of ARK identifiers named “ark.” Additional columns (eg, url, title, etc.) are used to update each field in the ARK record. 
+
+python arklet_api.py mint_csv --naan 13960 --csv /path/to/arks.csv
+
+Mint a batch of ARKs described in a CSV document under the given NAAN. The given CSV document must contain a column of extant shoulders named “shoulder.” Additional optional columns (eg, url, title, etc.) are bound to each ARK record. 
+
+### Administrator’s interface
+
+Administrators can access the /admin interface of the minter to manage API access keys, shoulders, NAANs, and other administrators. Administrator access is protected using standard username and password authentication. The first administrator account must be set up when initially deploying the application.
+
+_A note on ARK metadata_
+
+The Arklet-Frick schema is based on the main Dublin Core elements:
+- Title (http://purl.org/dc/elements/1.1/title (http://purl.org/dc/elements/1.1/title)): the name of the resource.
+- Type: (http://purl.org/dc/elements/1.1/type (http://purl.org/dc/elements/1.1/type)): the intellectual type of the resource, such as collection, image, or text. Values should be controlled and can be specific to the Frick's namespace.
+- Format (http://purl.org/dc/elements/1.1/format (http://purl.org/dc/elements/1.1/format)): the file format, medium, or dimensions of a resource at its current access point. An ARK for a bibliographic record in the Alma catalog has the format MARC. Values should be controlled and specific to shoulders.
+- Identifier (http://purl.org/dc/elements/1.1/identifier (http://purl.org/dc/elements/1.1/identifier)): the unique identifier of the resource in the system of record.
+- Relation (http://purl.org/dc/elements/1.1/relation (http://purl.org/dc/elements/1.1/relation)): typically in the arklet-frick schema, membership in an intellectual collection that spans multiple systems of record. This a linking field.
+- Source (http://purl.org/dc/elements/1.1/source (http://purl.org/dc/elements/1.1/source)): a resource, ideally a dereferenceable URI, from which the described resource is derived. Examples include a digital asset derived from a container asset or bibliographic resource. This is a linking field.
+No metadata field in the schema is required by the application, but best practice is to provide some value for each field according the shoulder schema. The Name2Thing platform provides structured values for the ARK specification at https://n2t.net/e/n2t_apidoc.html (https://n2t.net/e/n2t_apidoc.html).
+
+## Setup 
+
+Use docker-compose up to automatically launch the Postgres database, the arklet-minter component, and the arklet-resolver component. By default, the minter runs on 127.0.0.1:8001 and the resolver runs on 127.0.0.1:8000.
+
+Configuration for the local environment can be found in the docker/env.local envfile. Note that if you wish to change the ports you also need to update the port forwarding configuration in docker-compose.yml.
 
 ### Creating a Superuser
+To properly set up the application, create the first user with admin privileges from the command line. 
 
-You need to create the first user with admin privileges from the command line in order to properly set up the application.
-
-```
 make dev-cmd
-```
 
-launches a bash shell in the minter container.
+…launches a bash shell in the minter container.
 
-```
 ./manage.py createsuperuser
-```
 
-creates the superuser
+…creates the superuser.
 
 ### Admin Panel Setup
+To continue the setup, access the Admin panel via a web browser at 127.0.0.1:8000/admin.
 
-To continue the setup, you can access the Admin panel via web browser at `127.0.0.1:8000/admin`.
+Next, create a NAAN and an API key to begin using the web API.
 
-Create a NAAN and an associated API key.
+### Production
 
-## Production
+This repository is pre-configured for production deployment using nginx and guincorn, and assumes the use of a managed database instance and general webserver computing instance. 
 
-This repo is pre-configured for production deployment using nginx, gunicorn, and assuming a managed database instance + general webserver compute instance (eg, Digital Ocean droplet + managed postgres). Nginx and gunicorn replace the development Django server offering improved performance and security.
+To use this repository, fill in the relevant database credentials and a secure Django secret key in env.prod.example and rename the file to env.prod. 
 
-Fill in the relevant postgres credentials and a secure Django secret key in `env.prod.example` and rename the file to `env.prod`.
+To launch the minter, resolver, and nginx server run docker-compose -f docker-compose.nginx.yml --profile nginx up, or simply make prod. By default, the resolver runs on port 80 and the minter runs on port 8080. To change the port that the minter is accessed on, alter the port numbers in both docker-compose.nginx.yml as well as nginx.conf. 
 
-To launch the minter, resolver, and nginx server run `docker-compose -f docker-compose.nginx.yml --profile nginx up`, or simply `make prod`. By default, the resolver runs on port 80 (eg, no need to specify a port number when using the resolver service) and the minter runs on port 8080. If you wish to change the port that the minter is accessed on you must alter the port numbers in both `docker-compose.nginx.yml` as well as `nginx.conf`
+## License
+
+This code is licensed with the MIT open-source license.
