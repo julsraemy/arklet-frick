@@ -4,7 +4,7 @@ Arklet-Frick is a fork of the Internet Archive Arklet (https://github.com/intern
 
 Arklet-Frick is a Python Django application for minting, binding, and resolving ARKS.
 
-It is intended to follow best practices set out by https://arks.org/ (https://arks.org/).
+It is intended to follow best practices set out by https://arks.org/.
 
 ## Feature Comparison
 
@@ -36,17 +36,17 @@ The repository comes pre-configured with Docker development and production setti
 
 ### ARK Resolution
 
-A resolver running at https://resolver.org/ (https://resolver.org/) will resolve ARKs that follow the format laid out in the ARK Alliance specification.
+A resolver running at https://resolver.org/ will resolve ARKs that follow the format laid out in the ARK Alliance specification.
 
 The ARK must consist of four parts: the “ark” header, a namespace, a shoulder, and an identifier.
 
 A standard ARK might look like this: ark:/12345/ab1fgh234mn
 
-GET https://resolver.org/ark:/12345/ab1fgh234mn (https://resolver.org/ark:/12345/ab1fgh234mn) redirects to the value stored in the URL field of the ARK metadata. If the ARK exists but the URL field is empty, a 404 code is returned. If no matching ARK is found, Arklet-Frick will forward the request to https://n2t.net/ (https://n2t.net/).
+GET https://resolver.org/ark:/12345/ab1fgh234mn redirects to the value stored in the URL field of the ARK metadata. If the ARK exists but the URL field is empty, a 404 code is returned. If no matching ARK is found, Arklet-Frick will forward the request to https://n2t.net/.
 
-GET https://resolver.org/ark:/12345/ab1fgh234mn?info (https://resolver.org/ark:/12345/ab1fgh234mn?info) and GET https://resolver.org/ark:/12345/ab1fgh234mn?ijson (https://resolver.org/ark:/12345/ab1fgh234mn?ijson) return the ARK metadata. The ?info extension returns a human-readable HTML representation, while the ?json extension returns pure JSON. If the ARK is not found in the database, a 404 error is returned. 
+GET https://resolver.org/ark:/12345/ab1fgh234mn?info and GET https://resolver.org/ark:/12345/ab1fgh234mn?ijson return the ARK metadata. The ?info extension returns a human-readable HTML representation, while the ?json extension returns pure JSON. If the ARK is not found in the database, a 404 error is returned. 
 
-GET https://resolver.org/ark:/12345/ab1fgh234mn/any_suffix (https://resolver.org/ark:/12345/ab1fgh234mn/any_suffix) or GET https://resolver.org/ark:/12345/ab1fgh234mn?any_suffix (https://resolver.org/ark:/12345/ab1fgh234mn?any_suffix) will redirect to the value of the URL and “pass-through” the value of the suffix to the destination URL. For instance, if ark:/12345/ab1fgh234mn redirects to English Wikipedia, https://resolver.org/ark:/12345/ab1fgh234mn/Henry_Clay_Frick (https://resolver.org/ark:/12345/ab1fgh234mn/Henry_Clay_Frick) will redirect to  https://en.wikipedia.org/wiki/Henry_Clay_Frick (https://en.wikipedia.org/wiki/Henry_Clay_Frick).
+GET https://resolver.org/ark:/12345/ab1fgh234mn/any_suffix or GET https://resolver.org/ark:/12345/ab1fgh234mn?any_suffix will redirect to the value of the URL and “pass-through” the value of the suffix to the destination URL. For instance, if ark:/12345/ab1fgh234mn redirects to English Wikipedia, https://resolver.org/ark:/12345/ab1fgh234mn/Henry_Clay_Frick will redirect to  https://en.wikipedia.org/wiki/Henry_Clay_Frick.
 
 ### ARK minting and editing
 
@@ -122,13 +122,14 @@ Administrators can access the /admin interface of the minter to manage API acces
 _A note on ARK metadata_
 
 The Arklet-Frick schema is based on the main Dublin Core elements:
-- Title (http://purl.org/dc/elements/1.1/title (http://purl.org/dc/elements/1.1/title)): the name of the resource.
-- Type: (http://purl.org/dc/elements/1.1/type (http://purl.org/dc/elements/1.1/type)): the intellectual type of the resource, such as collection, image, or text. Values should be controlled and can be specific to the Frick's namespace.
-- Format (http://purl.org/dc/elements/1.1/format (http://purl.org/dc/elements/1.1/format)): the file format, medium, or dimensions of a resource at its current access point. An ARK for a bibliographic record in the Alma catalog has the format MARC. Values should be controlled and specific to shoulders.
-- Identifier (http://purl.org/dc/elements/1.1/identifier (http://purl.org/dc/elements/1.1/identifier)): the unique identifier of the resource in the system of record.
-- Relation (http://purl.org/dc/elements/1.1/relation (http://purl.org/dc/elements/1.1/relation)): typically in the arklet-frick schema, membership in an intellectual collection that spans multiple systems of record. This a linking field.
-- Source (http://purl.org/dc/elements/1.1/source (http://purl.org/dc/elements/1.1/source)): a resource, ideally a dereferenceable URI, from which the described resource is derived. Examples include a digital asset derived from a container asset or bibliographic resource. This is a linking field.
-No metadata field in the schema is required by the application, but best practice is to provide some value for each field according the shoulder schema. The Name2Thing platform provides structured values for the ARK specification at https://n2t.net/e/n2t_apidoc.html (https://n2t.net/e/n2t_apidoc.html).
+- Title (http://purl.org/dc/elements/1.1/title): the name of the resource.
+- Type: (http://purl.org/dc/elements/1.1/type): the intellectual type of the resource, such as collection, image, or text. Values should be controlled and can be specific to the Frick's namespace.
+- Format (http://purl.org/dc/elements/1.1/format): the file format, medium, or dimensions of a resource at its current access point. An ARK for a bibliographic record in the Alma catalog has the format MARC. Values should be controlled and specific to shoulders.
+- Identifier (http://purl.org/dc/elements/1.1/identifier): the unique identifier of the resource in the system of record.
+- Relation (http://purl.org/dc/elements/1.1/relation): typically in the arklet-frick schema, membership in an intellectual collection that spans multiple systems of record. This a linking field.
+- Source (http://purl.org/dc/elements/1.1/source): a resource, ideally a dereferenceable URI, from which the described resource is derived. Examples include a digital asset derived from a container asset or bibliographic resource. This is a linking field.
+  
+No metadata field in the schema is required by the application, but best practice is to provide some value for each field according the shoulder schema. The Name2Thing platform provides structured values for the ARK specification at https://n2t.net/e/n2t_apidoc.html.
 
 ## Setup 
 
