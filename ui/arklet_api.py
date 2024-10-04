@@ -4,8 +4,8 @@ import argparse
 import json
 import os
 
-#DEFAULT_URL = 'http://127.0.0.1:8001'
-DEFAULT_URL = 'http://ark.frick.org:8080'
+DEFAULT_URL = 'http://127.0.0.1:8001'
+#DEFAULT_URL = 'http://ark.frick.org:8080'
 DEFAULT_KEY = os.environ['ARK_API_KEY']
 
 MINT_FIELDS = [
